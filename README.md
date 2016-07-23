@@ -10,3 +10,5 @@ coalescence times and summaries thereof.
 Use `make` to compile the program. (See the `Makefile` for options.)
 
 See `coalped --help` and `pedsim --help` for usage and features.
+
+`coalseam` is available under the GPLv3 license. See LICENSE.txt for details.
