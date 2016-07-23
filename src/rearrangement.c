@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-// #define NDEBUG    // define to disable asserts
 #include <assert.h>
 #include <string.h>
 #include <math.h>
