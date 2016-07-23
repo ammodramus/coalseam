@@ -5,7 +5,7 @@ headerfiles =  $(wildcard src/*.h)
 all: coalseam
 
 coalseam: $(coalseamsrc) $(headerfiles)
-	gcc $(coalseamsrc) -DNDEBUG -lm -O3 -march=native -o coalseam
+	gcc -std=gnu89 $(coalseamsrc) -DNDEBUG -lm -O3 -march=native -o coalseam
 
 pedsim: $(pedsimsrc) $(headerfiles)
-	gcc $(pedsimsrc) -DNDEBUG -lm -O3 -march=native -o pedsim 
+	gcc -std=gnu89 $(pedsimsrc) -DNDEBUG -lm -O3 -march=native -o pedsim 
