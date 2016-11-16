@@ -70,10 +70,13 @@ void get_init_indivs_pedsim(CoalPedigree * ped, Options * opt, int32_t * indivs)
 
 void print_coal_probs(CoalPedigree * ped, int32_t * indivs, int32_t maxGen, FILE * fout)
 {
-	int32_t t, i, j, k, indivIdx, parentCombIdxs[4], popnSize = ped->popnSize, checkInterval, anyWeight;
+	int32_t t, relT, i, j, k, indivIdx, parentCombIdxs[4], popnSize = ped->popnSize, checkInterval, anyWeight;
 	double prob;
 
     checkInterval = maxGen/30;
+    if (checkInterval == 0){
+        checkInterval = 1;
+    }
 
     double * weights = (double *)malloc(sizeof(double) * ped->popnSize * ped->popnSize);
     CHECKPOINTER(weights);
@@ -86,6 +89,20 @@ void print_coal_probs(CoalPedigree * ped, int32_t * indivs, int32_t maxGen, FILE
 	weights[popnSize*indivs[0] + indivs[1]] = 1.0;		// initial configuration.
 	for(t = 0; t < maxGen-1; t++)		// note < not <=. Arbitrary.
 	{
+        // relT is the relationships index after cycling through the top of the pedigree
+        // first time through, use the normal relationships
+        if (t < ped->numGenerations-1)
+        {
+            relT = t;
+        }
+        // later, use the relationsips starting in the 10th generation
+        // this is to avoid any special pedigree structure in the first 10 generations back in time
+        // if ped->numGenerations is < 10, this will fall back to the first 10 generations
+        else
+        {
+            relT = (t % (ped->numGenerations-1 - 10) + 10) % (ped->numGenerations-1);
+        }
+
         prob = 0.0;
 		// pass back the weight.
 		for(i = 0; i < popnSize; i++)
@@ -95,10 +112,10 @@ void print_coal_probs(CoalPedigree * ped, int32_t * indivs, int32_t maxGen, FILE
 				indivIdx = i*popnSize + j;
 				if(weights[indivIdx] > 0.0)
 				{
-					parentCombIdxs[0] = ped->relationships[t][i][0]*popnSize + ped->relationships[t][j][0];
-					parentCombIdxs[1] = ped->relationships[t][i][0]*popnSize + ped->relationships[t][j][1];
-					parentCombIdxs[2] = ped->relationships[t][i][1]*popnSize + ped->relationships[t][j][0];
-					parentCombIdxs[3] = ped->relationships[t][i][1]*popnSize + ped->relationships[t][j][1];
+					parentCombIdxs[0] = ped->relationships[relT][i][0]*popnSize + ped->relationships[relT][j][0];
+					parentCombIdxs[1] = ped->relationships[relT][i][0]*popnSize + ped->relationships[relT][j][1];
+					parentCombIdxs[2] = ped->relationships[relT][i][1]*popnSize + ped->relationships[relT][j][0];
+					parentCombIdxs[3] = ped->relationships[relT][i][1]*popnSize + ped->relationships[relT][j][1];
 					for(k = 0; k < 4; k++)
 						weightsP[parentCombIdxs[k]] += 0.25*weights[indivIdx];
 				}
@@ -118,7 +135,7 @@ void print_coal_probs(CoalPedigree * ped, int32_t * indivs, int32_t maxGen, FILE
 			{
 				prob += 0.5*weights[indivIdx];
 				// give all of the non-coalescing weight to one vs. the other (equivalent) configuration
-				weightsP[ped->relationships[t+1][i][0]*popnSize + ped->relationships[t+1][i][1]] += 0.5*weights[indivIdx];
+				weightsP[ped->relationships[relT+1][i][0]*popnSize + ped->relationships[relT+1][i][1]] += 0.5*weights[indivIdx];
 				weights[indivIdx] = 0.0;
 			}
 		}
@@ -736,9 +753,17 @@ int32_t main(int argc, char * argv[])
     if(!opt.fstSet && !opt.multiplePairs)
     {
         if(opt.exactSet) // --exact
-            print_coal_probs(&ped, indivs, ped.numGenerations, stdout);
+        {
+            int32_t numSimGens = ped.numGenerations;
+            if (opt.pedsimNumProbGens){
+                numSimGens = opt.pedsimNumProbGens;
+            }
+            print_coal_probs(&ped, indivs, numSimGens, stdout);
+        }
         else  //--means [default]
+        {
             print_sim_coal_times(&ped, indivs, opt.numCoalTimes, stdout);
+        }
     }
     else if(opt.fstSet && !opt.multiplePairs) // --fst
         printf("%g\n", simulate_fst(&ped, indivs, opt.numCoalTimes));

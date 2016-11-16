@@ -69,6 +69,7 @@ static struct option long_options[] =
     {"single-lineage", no_argument, 0, 30},
     {"num-single-lineages", required_argument, 0, 31},
     {"means", no_argument, 0, 32},
+    {"num-prob-gens", required_argument, 0, 33},
 	{0, 0, 0, 0}
 };
 
@@ -161,6 +162,7 @@ void Options_set_defaults(Options * opt)
     opt->numPairs = 1;
     opt->singleLineageSet = 0;
     opt->numSingleLineages = 1;
+    opt->pedsimNumProbGens = 0;
     return;
 }
 
@@ -412,6 +414,7 @@ char usage_pedsim[] = "\npedsim [OPTIONS]\n\
     --fixed-ibd x                   have a single inbred individual whose parents parents are related by a single ancestor x generations ago\n\
     --fixed-migrant x               have a single individual with recent migrant ancestry, who had one ancestor who was a migrant x generations ago\n\
     --num-pairs x                   simulate x random pairs of individuals\n\
+    --num-prob-gens x               number of generations for which coalescence probabilities are calculated\n\
 	\n";
 
 void Options_print_help_statement_pedsim()
@@ -586,6 +589,11 @@ void Options_parse_options_pedsim(int argc, char ** argv, Options * opt)
             case 32: // --means
                 opt->exactSet = 0;
                 break;
+            case 33:
+                success = sscanf(optarg, "%i", &(opt->pedsimNumProbGens));
+                if(!success)
+                    PERROR("invalid --num-prob-gens");
+                break;
 			default:
                 if(optarg)
                     fprintf(stderr, "\nInvalid option: %s\n\n", optarg);
@@ -638,7 +646,8 @@ void Options_parse_options_pedsim(int argc, char ** argv, Options * opt)
         PERROR("--num-pairs > 1 and --fst are mutually exclusive");
     if(opt->singleLineageSet && opt->numDemes != 2)
         PERROR("--num-demes (-D) must be 2 when using --single-lineage");
-
+    if(opt->pedsimNumProbGens < 0)
+        PERROR("invalid --num-prob-gens (must be > 0)");
 	return;
 }
 

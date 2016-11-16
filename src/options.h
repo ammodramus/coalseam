@@ -82,6 +82,7 @@ typedef struct options_
     int32_t multiplePairs;
     int32_t singleLineageSet; 
     int32_t numSingleLineages;
+    int32_t pedsimNumProbGens;
 } Options;
 
 void Options_parse_options(int argc, char ** argv, Options * opt);
